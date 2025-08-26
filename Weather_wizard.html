@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Weather App</title>
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+   <style>
+       :root {
+           --primary-color: #f7f7f7;
+           --secondary-color: #1c1c1c;
+           --highlight-color: #007bff;
+           --white-color: #ffffff;
+           --dark-background: #1a1a1a;
+           --light-background: #f7f7f7;
+           --dark-text: #f7f7f7;
+           --light-text: #1c1c1c;
+           --border-radius: 15px;
+           --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+       }
+
+       body {
+           font-family: 'Roboto', sans-serif;
+           margin: 0;
+           padding: 0;
+           background-color: var(--primary-color);
+           color: var(--secondary-color);
+           transition: all 0.3s ease;
+       }
+
+       .container {
+           height: 100vh;
+           display: flex;
+           flex-direction: column;
+           justify-content: center;
+           align-items: center;
+       }
+
+       /* Background Images - Local Images */
+       .clear {
+           background: url('images/sky-944977_960_720.jpg') no-repeat center center fixed;
+           background-size: cover;
+       }
+
+       .clouds {
+           background: url('images/clouds-2067480_960_720.jpg') no-repeat center center fixed;
+           background-size: cover;
+       }
+
+       .rain {
+           background: url('images/rain-2879313_960_720.jpg') no-repeat center center fixed;
+           background-size: cover;
+       }
+
+       .snow {
+           background: url('images/snow-3881735_960_720.jpg') no-repeat center center fixed;
+           background-size: cover;
+       }
+
+       /* Dark Mode */
+       .dark-mode {
+           background-color: var(--dark-background);
+           color: var(--dark-text);
+       }
+
+       /* Card Styling */
+       .card {
+           background-color: rgba(255, 255, 255, 0.7);
+           border-radius: var(--border-radius);
+           box-shadow: var(--box-shadow);
+           text-align: center;
+           padding: 30px;
+           width: 80%;
+           max-width: 400px;
+           margin: 10px;
+       }
+
+       .card h1 {
+           font-size: 3rem;
+           font-weight: 600;
+           margin: 20px 0;
+       }
+
+       .card p {
+           font-size: 1.25rem;
+           margin: 5px 0;
+       }
+
+       .form-control {
+           font-size: 1.2rem;
+           border-radius: 10px;
+       }
+
+       .btn-primary {
+           background-color: var(--highlight-color);
+           border: none;
+           padding: 12px 20px;
+           width: 100%;
+           border-radius: 25px;
+           font-size: 1.2rem;
+       }
+
+       .btn-primary:hover {
+           background-color: #0056b3;
+       }
+
+       .loading {
+           font-size: 1.5rem;
+           color: var(--highlight-color);
+           text-align: center;
+       }
+
+       /* Styling for the hourly forecast */
+       .hourly-card {
+           background: rgba(255, 255, 255, 0.8);
+           border-radius: 10px;
+           padding: 15px;
+           margin: 10px;
+           box-shadow: var(--box-shadow);
+       }
+
+       .hourly-card h6 {
+           font-size: 1.1rem;
+           margin: 5px 0;
+       }
+
+       .hourly-card p {
+           font-size: 1rem;
+       }
+
+       /* Dark Mode Button Placement */
+       .dark-mode-btn {
+           position: absolute;
+           top: 15px;
+           right: 15px;
+           z-index: 1000;
+       }
+
+       /* Welcome page styles */
+       .welcome-container {
+           display: flex;
+           flex-direction: column;
+           justify-content: center;
+           align-items: center;
+           height: 100vh;
+           background-color: var(--primary-color);
+       }
+
+       .welcome-container h1 {
+           font-size: 3rem;
+           font-weight: 700;
+       }
+
+       .welcome-container p {
+           font-size: 1.5rem;
+           margin-top: 20px;
+       }
+
+       .btn-welcome {
+           background-color: var(--highlight-color);
+           border: none;
+           padding: 12px 20px;
+           width: 200px;
+           border-radius: 25px;
+           font-size: 1.2rem;
+           margin-top: 20px;
+       }
+
+       .btn-welcome:hover {
+           background-color: #0056b3;
+       }
+
+       /* Hide weather app until ready */
+       #weather-app {
+           display: none;
+       }
+
+       /* Transition for smooth display */
+       #weather-details {
+           transition: opacity 0.3s ease;
+       }
+   </style>
+</head>
+
+<body>
+   <!-- Welcome Page -->
+   <section id="welcome-page" class="welcome-container">
+       <h1>Welcome to the Weather App!</h1>
+       <p>Your personal weather assistant. Get accurate weather updates for any city in the world.</p>
+       <button class="btn btn-primary btn-welcome" onclick="startWeatherApp()">Get Started</button>
+   </section>
+
+   <!-- Weather App Section (Initially Hidden) -->
+   <section id="weather-app">
+    <video id="background-video" autoplay loop muted playsinline style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1;">
+        <source id="video-source" src="videos/clear.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <div class="container">
+        <!-- Dark Mode Toggle Button (placed at the top right) -->
+        <button class="btn btn-dark dark-mode-btn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+        <button class="btn btn-secondary" onclick="getWeatherForCurrentLocation()">Use Current Location</button>
+
+        <div class="card">
+            <h1 id="city-name">My Location</h1>
+            <input type="text" id="cityInput" class="form-control" placeholder="Enter City Name">
+            <button class="btn btn-primary mt-3" onclick="getWeather()">Check Weather</button>
+
+            <div id="weather-details" class="mt-4">
+                <p id="temperature">Temperature: --°C / --°F</p>
+                <p id="description">Condition: --</p>
+                <p id="wind-speed">Wind: -- m/s</p>
+                <p id="humidity">Humidity: --%</p>
+                <p id="pressure">Pressure: -- hPa</p>
+                <p id="visibility">Visibility: -- km</p>
+            </div>
+
+            <!-- Weather Icon -->
+            <img id="weather-icon" alt="Weather Icon" style="width: 50px; height: 50px;">
+            <!-- Hourly Forecast Carousel -->
+    <div id="hourlyCarousel" class="carousel slide mt-4" data-bs-ride="carousel">
+        <div class="carousel-inner" id="hourlyForecast">
+            <!-- Hourly forecast items will be injected here dynamically -->
+        </div>
+    </div>
+</section>
+
+
+    
+
+   <script>
+       const API_KEY = '9764bb8f1b084382ea9b9d0baa357e71'; // Replace with your OpenWeather API key
+
+       let isCelsius = true; // Default unit is Celsius
+       let isDarkMode = false; // Default mode is light
+
+       // Toggle Dark Mode
+       function toggleDarkMode() {
+           const body = document.body;
+           const weatherApp = document.getElementById('weather-app');
+           isDarkMode = !isDarkMode;
+           if (isDarkMode) {
+               body.classList.add('dark-mode');
+               weatherApp.classList.add('dark-mode');
+           } else {
+               body.classList.remove('dark-mode');
+               weatherApp.classList.remove('dark-mode');
+           }
+       }
+
+       // Start Weather App (Hide Welcome Page and Show Weather App)
+       function startWeatherApp() {
+           document.getElementById('welcome-page').style.display = 'none';
+           document.getElementById('weather-app').style.display = 'block';
+       }
+
+       // Fetch weather data by city name
+       function getWeather() {
+           const city = document.getElementById('cityInput').value;
+
+           if (!city) {
+               alert("Please enter a city.");
+               return;
+           }
+
+           fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`)
+               .then(response => {
+                   if (!response.ok) {
+                       throw new Error('City not found');
+                   }
+                   return response.json();
+               })
+               .then(data => {
+                   displayWeather(data);
+                   getHourlyForecast(data.coord.lat, data.coord.lon);
+               })
+               .catch(error => {
+                   alert(`Error: ${error.message}`);
+               });
+       }
+
+       // Fetch weather data using geolocation
+       function getWeatherForCurrentLocation() {
+           if (navigator.geolocation) {
+               navigator.geolocation.getCurrentPosition(position => {
+                   const lat = position.coords.latitude;
+                   const lon = position.coords.longitude;
+                   fetchWeatherByCoordinates(lat, lon);
+               }, () => {
+                   alert("Unable to retrieve your location.");
+               });
+           } else {
+               alert("Geolocation is not supported by this browser.");
+           }
+       }
+
+       // Fetch weather data by coordinates
+       function fetchWeatherByCoordinates(lat, lon) {
+           fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`)
+               .then(response => response.json())
+               .then(data => {
+                   displayWeather(data);
+                   getHourlyForecast(data.coord.lat, data.coord.lon);
+               })
+               .catch(error => alert("Unable to retrieve weather data."));
+       }
+
+       // Display weather information
+function displayWeather(data) {
+    document.getElementById('city-name').textContent = `${data.name}, ${data.sys.country}`;
+    const temperatureCelsius = data.main.temp;
+    const temperatureFahrenheit = celsiusToFahrenheit(temperatureCelsius);
+    document.getElementById('temperature').textContent = `Temperature: ${Math.round(temperatureCelsius)}°C / ${Math.round(temperatureFahrenheit)}°F`;
+    const description = data.weather[0].description;
+    document.getElementById('description').textContent = `Condition: ${description}`;
+    document.getElementById('wind-speed').textContent = `Wind: ${data.wind.speed} m/s`;
+    document.getElementById('humidity').textContent = `Humidity: ${data.main.humidity}%`;
+    document.getElementById('pressure').textContent = `Pressure: ${data.main.pressure} hPa`;
+    document.getElementById('visibility').textContent = `Visibility: ${data.visibility / 1000} km`;
+    document.getElementById('weather-icon').src = `http://openweathermap.org/img/wn/${data.weather[0].icon}.png`;
+
+    // Update background video
+    updateBackgroundVideo(data.weather[0].main.toLowerCase());
+}
+
+
+       // Convert Celsius to Fahrenheit
+       function celsiusToFahrenheit(celsius) {
+           return (celsius * 9 / 5) + 32;
+       }
+
+       // Fetch hourly forecast data
+       function getHourlyForecast(lat, lon) {
+           fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`)
+               .then(response => response.json())
+               .then(data => {
+                   displayHourlyForecast(data);
+               });
+       }
+
+       // Display hourly forecast
+       function displayHourlyForecast(data) {
+           const hourlyForecast = data.list.slice(0, 12); // Next 12 hours
+           const hourlyCarousel = document.getElementById('hourlyForecast');
+           hourlyCarousel.innerHTML = ''; // Clear previous forecast
+
+           hourlyForecast.forEach((hour, index) => {
+               const time = new Date(hour.dt * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+               const temperatureCelsius = hour.main.temp;
+               const temperatureFahrenheit = celsiusToFahrenheit(temperatureCelsius);
+               const description = hour.weather[0].description;
+               const iconCode = hour.weather[0].icon;
+               const iconUrl = `http://openweathermap.org/img/wn/${iconCode}.png`;
+
+               const item = document.createElement('div');
+               item.className = `carousel-item ${index === 0 ? 'active' : ''}`;
+               item.innerHTML = `
+                   <div class="hourly-card">
+                       <h6>${time}</h6>
+                       <img src="${iconUrl}" alt="${description}" style="width: 30px; height: 30px;">
+                       <p>Temp: ${Math.round(temperatureCelsius)}°C / ${Math.round(temperatureFahrenheit)}°F</p>
+                       <p>${description}</p>
+                   </div>
+               `;
+               hourlyCarousel.appendChild(item);
+           });
+       }
+       // Update background video based on weather condition
+function updateBackgroundVideo(condition) {
+    const videoSource = document.getElementById('video-source');
+    const backgroundVideo = document.getElementById('background-video');
+
+    let videoFile = 'clear.mp4'; // Default video
+
+    if (condition.includes('clouds')) {
+        videoFile = 'clouds.mp4';
+    } else if (condition.includes('rain')) {
+        videoFile = 'rain.mp4';
+    } else if (condition.includes('snow')) {
+        videoFile = 'snow.mp4';
+    } else if (condition.includes('thunderstorm')) {
+        videoFile = 'thunderstorm.mp4';
+    } else if (condition.includes('mist') || condition.includes('fog')) {
+        videoFile = 'fog.mp4';
+    }
+
+    videoSource.src = `videos/${videoFile}`;
+    backgroundVideo.load(); // Reload the video
+}
+
+   </script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
+
